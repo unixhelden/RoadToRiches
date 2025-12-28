@@ -49,6 +49,13 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
         if ui.checkbox(&mut app.settings.sound_enabled, "Sound bei Scan abspielen").changed() {
             app.save_settings();
         }
+        // Der neue Test-Button (nur aktiv, wenn Sound generell an ist)
+        ui.add_enabled_ui(app.settings.sound_enabled, |ui| {
+            if ui.button("🔊 Test-Ton").on_hover_text("Spielt den Scan-Sound einmal ab").clicked() {
+                println!("DEBUG: Manueller Sound-Test ausgelöst");
+                crate::audio::play_scan_sound();
+            }
+        });
         ui.horizontal(|ui| {
             if ui.button("🎵 Sound-Datei wählen").clicked() {
                 if let Some(path) = FileDialog::new().add_filter("Audio", &["wav", "mp3"]).pick_file() {
