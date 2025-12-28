@@ -44,26 +44,46 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
     ui.add_space(10.0);
 
     // --- AUDIO ---
-    ui.group(|ui| {
-        ui.label("Benachrichtigungen:");
-        if ui.checkbox(&mut app.settings.sound_enabled, "Sound bei Scan abspielen").changed() {
-            app.save_settings();
-        }
-        // Der neue Test-Button (nur aktiv, wenn Sound generell an ist)
+    ui.vertical(|ui| {
+        ui.heading("Audio-Einstellungen");
+        ui.add_space(8.0); // Etwas Abstand unter der Überschrift
+
+        ui.horizontal(|ui| {
+            if ui.checkbox(&mut app.settings.sound_enabled, "Sound bei Scan abspielen").changed() {
+                app.save_settings();
+            }
+        ui.add_space(20.0); // Raum zwischen CheckBox und Button
+
         ui.add_enabled_ui(app.settings.sound_enabled, |ui| {
             if ui.button("🔊 Test-Ton").on_hover_text("Spielt den Scan-Sound einmal ab").clicked() {
-                println!("DEBUG: Manueller Sound-Test ausgelöst");
-                crate::audio::play_scan_sound();
+                // MIt Lautstärke übergeben an Funktion
+            crate::audio::play_scan_sound(app.settings.volume);
             }
         });
+    });
+
+    ui.add_space(12.0);
+    
+    ui.add_enabled_ui(app.settings.sound_enabled, |ui| {
         ui.horizontal(|ui| {
-            if ui.button("🎵 Sound-Datei wählen").clicked() {
-                if let Some(path) = FileDialog::new().add_filter("Audio", &["wav", "mp3"]).pick_file() {
-                    app.settings.sound_file = path.display().to_string();
-                    app.save_settings();
-                }
+            ui.label("Lautstärke:"); 
+            // Slider von 0% bis 100% (interne Werte 0.0 bis 1.0)
+            let res = ui.add(egui::Slider::new(&mut app.settings.volume, 0.0..=1.0).show_value(true));
+
+            if res.changed() {
+                app.save_settings();
             }
-            ui.label(egui::RichText::new(&app.settings.sound_file).small());
+        });
+    });
+    
+    ui.horizontal(|ui| {
+        if ui.button("🎵 Sound-Datei wählen").clicked() {
+            if let Some(path) = FileDialog::new().add_filter("Audio", &["wav", "mp3"]).pick_file() {
+                app.settings.sound_file = path.display().to_string();
+                app.save_settings();
+            }
+        }
+        ui.label(egui::RichText::new(&app.settings.sound_file).small());
         });
     });
 }
