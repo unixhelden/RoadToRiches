@@ -1,4 +1,4 @@
-use crate::models::{RawTravelStop, SystemGroup};
+use crate::models::{Body, SystemGroup};
 use std::error::Error;
 use std::fs;
 
@@ -11,36 +11,43 @@ pub fn load_and_group(path: &str) -> Result<Vec<SystemGroup>, Box<dyn Error>> {
     
     let mut groups: Vec<SystemGroup> = Vec::new();
 
-    for result in rdr.deserialize() {
-        let stop: RawTravelStop = result?;
+    for (index, result) in rdr.deserialize().enumerate() {
+        // Falls eine Zeile nicht gelesen werden kann, gibt uns das Terminal jetzt Bescheid
+        let stop: Body = match result {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("Fehler in CSV-Zeile {}: {}", index + 1, e);
+                continue; // Überspringt die kaputte Zeile, statt abzubrechen
+            }
+        };
         
-        // Suchen, ob das System bereits in unserer Liste existiert
+        // Gruppierungs-Logik
         if let Some(group) = groups.iter_mut().find(|g| g.name == stop.system_name) {
             group.bodies.push(stop);
         } else {
-            // Neues System anlegen
             groups.push(SystemGroup {
                 name: stop.system_name.clone(),
-                jumps: stop.jumps.clone(),
+                jumps: stop.jumps,
                 bodies: vec![stop],
             });
         }
     }
+
+    // Diagnose-Check: Wie viele Systeme wurden geladen?
+    println!("Ladevorgang abgeschlossen. {} Systeme gefunden.", groups.iter().count());
+    
     Ok(groups)
 }
 
-/// Speichert die Daten sicher: Schreibt erst eine temporäre Datei und erstellt ein Backup.
+/// Speichert die Daten sicher mit Backup.
 pub fn save_all(path: &str, groups: &[SystemGroup]) -> Result<(), Box<dyn Error>> {
-    // Sicherheits-Check: Wenn die Liste leer ist, wurde evtl. falsch geladen.
-    // Wir überschreiben dann nicht, um Datenverlust zu vermeiden.
     if groups.is_empty() {
-        return Err("Speichern abgebrochen: Keine Daten vorhanden (Schutz vor Leeren der Datei).".into());
+        return Err("Speichern abgebrochen: Liste ist leer.".into());
     }
 
     let temp_path = format!("{}.tmp", path);
     let backup_path = format!("{}.bak", path);
 
-    // 1. Daten in eine temporäre Datei schreiben
     {
         let mut wtr = csv::Writer::from_path(&temp_path)?;
         for group in groups {
@@ -51,13 +58,10 @@ pub fn save_all(path: &str, groups: &[SystemGroup]) -> Result<(), Box<dyn Error>
         wtr.flush()?;
     }
 
-    // 2. Bestehende Datei als Backup sichern
     if fs::metadata(path).is_ok() {
         fs::copy(path, &backup_path)?;
     }
 
-    // 3. Temporäre Datei zur echten Datei machen (Atomares Ersetzen)
     fs::rename(&temp_path, path)?;
-
     Ok(())
 }

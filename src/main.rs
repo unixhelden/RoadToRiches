@@ -32,19 +32,22 @@ fn main() -> eframe::Result<()> {
     // 3. Fenster-Optionen konfigurieren
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()
-            .with_inner_size([550.0, 750.0])
-            .with_min_inner_size([400.0, 500.0])
+            .with_inner_size([550.0, 550.0])
+            .with_min_inner_size([400.0, 400.0])
             .with_drag_and_drop(true),
         ..Default::default()
     };
     
     // 4. Die App starten
     // Wir übergeben die geladenen Gruppen und Einstellungen an die EliteApp::new
+    // In src/main.rs (der untere Teil)
     eframe::run_native(
-        "Elite Voyager - Professional Explorer Tool",
+        "Spansh Road To Riches Companion",
         options,
-        Box::new(|_cc| {
-            Ok(Box::new(EliteApp::new(groups, settings)))
+        Box::new(|cc| {
+            // Wir geben 'cc' jetzt an EliteApp::new weiter
+            Ok(Box::new(EliteApp::new(cc, groups, settings)))
         }),
+
     )
 }

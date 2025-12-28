@@ -1,19 +1,19 @@
 use serde::{Deserialize, Serialize};
 
-/// Speichert alle Benutzereinstellungen der App.
+/// Speichert die Benutzereinstellungen und Pfade.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppSettings {
-    /// Pfad zur geladenen Road-to-Riches CSV.
+    /// Pfad zur aktuell geladenen Road-to-Riches CSV-Datei.
     pub csv_path: String,
-    /// Manueller Pfad, falls 'Custom' Modus gewählt wurde.
+    /// Manueller Pfad zu den Elite-Journal-Logs (wird bei "Custom" genutzt).
     pub log_dir: String,
-    /// Ob ein Sound bei einem erfolgreichen Scan abgespielt wird.
+    /// Schalter für die akustische Benachrichtigung bei Scans.
     pub sound_enabled: bool,
-    /// Pfad zur gewählten Sounddatei (.wav / .mp3).
+    /// Pfad zur Audio-Datei (.wav oder .mp3).
     pub sound_file: String,
-    /// Modus für die Log-Suche: "Windows", "Linux" oder "Custom".
+    /// Betriebsmodus für die Log-Suche ("Windows", "Linux" oder "Custom").
     pub os_mode: String,
-    /// Erzwingt das dunkle Design (True) oder nutzt das System-Theme (False).
+    /// Flag für das dunkle Design (wird in der App-Schleife erzwungen).
     pub dark_mode: bool,
 }
 
@@ -24,7 +24,7 @@ impl Default for AppSettings {
             log_dir: String::new(),
             sound_enabled: true,
             sound_file: String::new(),
-            // Erkennt das OS beim ersten Start automatisch
+            // Setzt den Standardwert basierend auf dem Betriebssystem beim ersten Start.
             os_mode: if cfg!(windows) { "Windows".into() } else { "Linux".into() },
             dark_mode: true,
         }
