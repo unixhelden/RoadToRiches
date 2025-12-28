@@ -11,8 +11,9 @@ serde = { version = "1.0", features = ["derive"] } # Daten-Serialisierung
 serde_json = "1.0"
 rfd = "0.16.0"
 notify = "8.2"
-rodio = "0.17"
+rodio = { version = "0.19", features = ["mp3"] } # Version 0.21 has Problems on Linux
 dirs = "6.0.0"
+image = "0.25"
 
 [build-dependencies]
 winres = "0.1"
