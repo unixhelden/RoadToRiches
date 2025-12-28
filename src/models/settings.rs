@@ -11,6 +11,8 @@ pub struct AppSettings {
     pub sound_enabled: bool,
     /// Pfad zur Audio-Datei (.wav oder .mp3).
     pub sound_file: String,
+    /// Volume Setting
+    pub volume: f32,
     /// Betriebsmodus für die Log-Suche ("Windows", "Linux" oder "Custom").
     pub os_mode: String,
     /// Flag für das dunkle Design (wird in der App-Schleife erzwungen).
@@ -24,6 +26,7 @@ impl Default for AppSettings {
             log_dir: String::new(),
             sound_enabled: true,
             sound_file: String::new(),
+            volume: 0.5,
             // Setzt den Standardwert basierend auf dem Betriebssystem beim ersten Start.
             os_mode: if cfg!(windows) { "Windows".into() } else { "Linux".into() },
             dark_mode: true,

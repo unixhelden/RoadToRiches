@@ -49,7 +49,7 @@ impl EliteApp {
                         
                         // Nutzt dein Feld aus models/settings.rs
                         if self.settings.sound_enabled {
-                            crate::audio::play_scan_sound();
+                            crate::audio::play_scan_sound(self.settings.volume);
                         }
                     }
                 }
