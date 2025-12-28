@@ -1,0 +1,49 @@
+name: Release Builds
+
+on:
+  push:
+    tags:
+      - 'v*' # Startet, wenn du einen Tag wie v0.1.0 pushst
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: roadtoriches-linux
+            asset_name: roadtoriches-linux.zip
+          - os: windows-latest
+            artifact_name: roadtoriches-windows
+            asset_name: roadtoriches-windows.zip
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Dependencies (Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwayland-dev libxkbcommon-dev libasound2-dev
+
+      - name: Build Release
+        run: cargo build --release
+
+      - name: Package Assets (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          zip -j ${{ matrix.asset_name }} target/release/roadtoriches assets/*
+
+      - name: Package Assets (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          powershell Compress-Archive -Path "target/release/roadtoriches.exe", "assets/*" -DestinationPath "${{ matrix.asset_name }}"
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ matrix.asset_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
