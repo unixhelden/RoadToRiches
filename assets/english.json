@@ -1,0 +1,26 @@
+{
+  "route_tab": "📊 Route",
+  "settings_tab": "⚙ Settings",
+  "tab_not_found": "Tab not found",
+  "load_csv": "📁 Load CSV",
+  "target_label": "TARGET:",
+  "no_route_active": "No route active",
+  "jumps_to_target": "Jumps to target:",
+  "no_route_message": "No route active.\nPlease load a Spansh CSV.",
+  "terraformable": "✨ TERRAFORMABLE",
+  "settings_heading": "⚙ Settings",
+  "appearance_label": "Appearance:",
+  "force_dark_design": "Force dark design",
+  "journal_directory": "Elite Dangerous Journal Directory:",
+  "choose_folder": "📁 Choose folder",
+  "audio_settings": "Audio Settings",
+  "play_sound_on_scan": "Play sound on scan",
+  "test_sound": "🔊 Test Sound",
+  "test_sound_tooltip": "Plays the scan sound once",
+  "volume_label": "Volume:",
+  "choose_sound_file": "🎵 Choose sound file",
+  "language_label": "Language:",
+  "language_german": "Deutsch",
+  "language_english": "English"
+}
+
