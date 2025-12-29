@@ -54,7 +54,13 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
 
     if let Some(idx) = current_idx {
         let mut needs_save = false;
-        let system = &mut app.groups[idx];
+        
+        // Extract values we need before borrowing system
+        use crate::constants::constants::COPY_FEEDBACK_DURATION_MS;
+        let is_recently_copied = app.last_copy_time.map_or(false, |t| t.elapsed() < Duration::from_millis(COPY_FEEDBACK_DURATION_MS));
+        let title_color = if is_recently_copied { egui::Color32::GREEN } else { highlight };
+        let jumps_label = app.translations.get("jumps_to_target").to_string();
+        let terraformable_label = app.translations.get("terraformable").to_string();
         
         // --- ZENTRIERTER CONTENT-BEREICH (Fixiert auf 500px) ---
         ui.vertical_centered(|ui| {
@@ -63,24 +69,22 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
             ui.set_max_width(content_width);
 
             // AKTUELLER STANDORT (📍 System Name)
-            use crate::constants::constants::COPY_FEEDBACK_DURATION_MS;
-            let is_recently_copied = app.last_copy_time.map_or(false, |t| t.elapsed() < Duration::from_millis(COPY_FEEDBACK_DURATION_MS));
-            let title_color = if is_recently_copied { egui::Color32::GREEN } else { highlight };
+            let system_name = app.groups[idx].name.clone();
+            let system_jumps = app.groups[idx].jumps;
 
             let resp = ui.add(egui::Label::new(
-                egui::RichText::new(format!("📍 {}", system.name))
+                egui::RichText::new(format!("📍 {}", system_name))
                     .size(26.0) // Sogar noch einen Tick größer als das Ziel
                     .strong()
                     .color(title_color)
             ).sense(egui::Sense::click()));
 
             if resp.clicked() {
-                ui.ctx().copy_text(system.name.clone());
+                ui.ctx().copy_text(system_name.clone());
                 app.last_copy_time = Some(Instant::now());
             }
 
-            let jumps_label = app.translations.get("jumps_to_target");
-            ui.label(egui::RichText::new(format!("{} {}", jumps_label, system.jumps)).weak());
+            ui.label(egui::RichText::new(format!("{} {}", jumps_label, system_jumps)).weak());
 
             ui.add_space(10.0);
 
@@ -89,8 +93,8 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     ui.vertical(|ui| {
-                        for body in &mut system.bodies {
-                            render_body_card(app, ui, body, &mut needs_save, highlight, content_width);
+                        for body in &mut app.groups[idx].bodies {
+                            render_body_card(ui, body, &mut needs_save, highlight, content_width, &terraformable_label);
                             ui.add_space(8.0);
                         }
                     });
@@ -106,7 +110,7 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
 }
 
 /// Rendert eine einzelne Planeten-Karte im EDMC-Stil
-fn render_body_card(app: &EliteApp, ui: &mut egui::Ui, body: &mut Body, needs_save: &mut bool, highlight: egui::Color32, width: f32) {
+fn render_body_card(ui: &mut egui::Ui, body: &mut Body, needs_save: &mut bool, highlight: egui::Color32, width: f32, terraformable_label: &str) {
     let frame = egui::Frame::group(ui.style())
         .fill(ui.visuals().panel_fill)
         .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
@@ -139,8 +143,7 @@ fn render_body_card(app: &EliteApp, ui: &mut egui::Ui, body: &mut Body, needs_sa
 
             if body.terraformable == "Yes" {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let terraformable = app.translations.get("terraformable");
-                    ui.label(egui::RichText::new(terraformable)
+                    ui.label(egui::RichText::new(terraformable_label)
                         .color(highlight)
                         .small()
                         .strong());

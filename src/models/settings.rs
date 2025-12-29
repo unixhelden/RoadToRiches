@@ -114,24 +114,4 @@ impl AppSettings {
     pub fn validate_volume(&mut self) {
         self.volume = self.volume.clamp(0.0, 1.0);
     }
-    
-    /// Validates settings and returns any errors found
-    pub fn validate(&mut self) -> Vec<String> {
-        let mut errors = Vec::new();
-        
-        // Validate volume
-        self.validate_volume();
-        
-        // Validate CSV path if set
-        if !self.csv_path.is_empty() && !std::path::Path::new(&self.csv_path).exists() {
-            errors.push(format!("CSV-Datei nicht gefunden: {}", self.csv_path));
-        }
-        
-        // Validate sound file if set
-        if !self.sound_file.is_empty() && !std::path::Path::new(&self.sound_file).exists() {
-            errors.push(format!("Sound-Datei nicht gefunden: {}", self.sound_file));
-        }
-        
-        errors
-    }
 }

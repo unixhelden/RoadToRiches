@@ -38,22 +38,16 @@ impl EliteApp {
         // Validate settings before saving
         self.settings.validate_volume();
         
-        // Reload translations if language changed
-        let old_language = self.settings.language;
-        
         let settings_path = self.get_settings_path();
         if let Ok(json) = serde_json::to_string_pretty(&self.settings) {
             if let Err(e) = std::fs::write(&settings_path, json) {
                 eprintln!("Fehler beim Speichern der Einstellungen nach {}: {}", settings_path, e);
-            } else {
-                // Reload translations if language changed
-                if self.settings.language != old_language {
-                    self.reload_translations();
-                }
             }
         } else {
             eprintln!("Fehler beim Serialisieren der Einstellungen");
         }
+        // Note: Translations are now reloaded immediately when language changes in the UI,
+        // not here, to ensure the UI updates right away.
     }
     
     fn get_settings_path(&self) -> String {

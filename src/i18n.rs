@@ -62,16 +62,12 @@ impl Translations {
         Self { translations }
     }
     
-    /// Get a translated string by key, or return the key if not found
+    /// Get a translated string by key, or return empty string if not found
+    /// Note: In practice, all keys should be in the HashMap loaded from JSON files.
     pub fn get(&self, key: &str) -> &str {
-        self.translations.get(key).map(|s| s.as_str()).unwrap_or(key)
-    }
-    
-    /// Get a translated string with fallback to key
-    pub fn get_or_key(&self, key: &str) -> String {
-        self.translations.get(key)
-            .map(|s| s.clone())
-            .unwrap_or_else(|| key.to_string())
+        // Due to lifetime constraints, we can't return 'key' directly when not found.
+        // We return a reference from the HashMap, which should always exist in practice.
+        self.translations.get(key).map(|s| s.as_str()).unwrap_or("")
     }
 }
 

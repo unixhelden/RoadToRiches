@@ -10,17 +10,24 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
 
     // --- LANGUAGE ---
     ui.group(|ui| {
-        let language_label = app.translations.get("language_label");
+        let language_label = app.translations.get("language_label").to_string();
         ui.label(language_label);
         ui.horizontal(|ui| {
             use crate::i18n::Language;
-            let german_label = app.translations.get("language_german");
-            let english_label = app.translations.get("language_english");
+            // Get translation strings before mutable borrow
+            let german_label = app.translations.get("language_german").to_string();
+            let english_label = app.translations.get("language_english").to_string();
             
-            if ui.selectable_value(&mut app.settings.language, Language::German, german_label).changed() {
+            if ui.selectable_value(&mut app.settings.language, Language::German, &german_label).changed() {
+                // Reload translations immediately when language changes
+                app.reload_translations();
+                ui.ctx().request_repaint(); // Request immediate UI update
                 app.save_settings();
             }
-            if ui.selectable_value(&mut app.settings.language, Language::English, english_label).changed() {
+            if ui.selectable_value(&mut app.settings.language, Language::English, &english_label).changed() {
+                // Reload translations immediately when language changes
+                app.reload_translations();
+                ui.ctx().request_repaint(); // Request immediate UI update
                 app.save_settings();
             }
         });
