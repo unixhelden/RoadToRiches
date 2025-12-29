@@ -38,12 +38,14 @@ pub fn render_menu(app: &mut EliteApp, ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
         // Tab: Route
         // Nutzt selectable_value, um den Button orange leuchten zu lassen, wenn er aktiv ist
-        if ui.selectable_label(app.current_tab == "route", "📊 Route").clicked() {
+        let route_label = app.translations.get("route_tab");
+        if ui.selectable_label(app.current_tab == "route", route_label).clicked() {
             app.current_tab = "route".to_string();
         }
         
         // Tab: Einstellungen
-        if ui.selectable_label(app.current_tab == "settings", "⚙ Einstellungen").clicked() {
+        let settings_label = app.translations.get("settings_tab");
+        if ui.selectable_label(app.current_tab == "settings", settings_label).clicked() {
             app.current_tab = "settings".to_string();
         }
     });
@@ -56,6 +58,9 @@ pub fn render_menu(app: &mut EliteApp, ui: &mut egui::Ui) {
     match app.current_tab.as_str() {
         "route" => route::render(app, ui),
         "settings" => settings::render(app, ui),
-        _ => { ui.label("Tab nicht gefunden"); }
+        _ => { 
+            let not_found = app.translations.get("tab_not_found");
+            ui.label(not_found);
+        }
     }
 }
