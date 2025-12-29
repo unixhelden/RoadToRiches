@@ -9,6 +9,7 @@ mod audio;
 mod ui;
 mod constants;
 mod i18n;
+mod update;
 
 use app::EliteApp;
 use models::AppSettings;

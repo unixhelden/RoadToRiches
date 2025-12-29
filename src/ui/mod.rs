@@ -3,6 +3,7 @@ use crate::app::EliteApp;
 
 pub mod route;
 pub mod settings;
+pub mod modals;
 
 /// Wendet das Elite-typische Orange-Schwarze Design global auf die App an.
 pub fn apply_elite_theme(ctx: &egui::Context, dark_mode: bool) {

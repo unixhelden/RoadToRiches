@@ -31,19 +31,40 @@ jobs:
       - name: Build Release
         run: cargo build --release
 
-      - name: Package Assets (Linux)
+      - name: Get Version
+        id: get_version
+        shell: bash
+        run: |
+          # Extrahiert die Version aus der Cargo.toml
+          VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f 2)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      # 2. Windows Packaging mit Versionsnummer
+      - name: Package Windows
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          mkdir dist
+          cp target/release/roadtoriches.exe dist/
+          cd dist
+          # Erstellt z.B. roadtoriches-v0.1.1-windows.zip
+          7z a ../roadtoriches-v${VERSION}-windows.zip roadtoriches.exe
+
+      # 3. Linux Packaging mit Versionsnummer
+      - name: Package Linux
         if: matrix.os == 'ubuntu-latest'
         run: |
-          zip -j ${{ matrix.asset_name }} target/release/roadtoriches assets/*
-
-      - name: Package Assets (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          powershell Compress-Archive -Path "target/release/roadtoriches.exe", "assets/*" -DestinationPath "${{ matrix.asset_name }}"
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          mkdir -p package
+          cp target/release/roadtoriches package/
+          tar -czvf roadtoriches-v${VERSION}-linux.tar.gz -C package .
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{ matrix.asset_name }}
+          files: |
+            roadtoriches-windows.zip
+            roadtoriches-linux.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
