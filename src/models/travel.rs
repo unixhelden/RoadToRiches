@@ -34,6 +34,23 @@ pub struct Body {
     pub status: String,
 }
 
+impl Body {
+    /// Check if body is completed
+    pub fn is_completed(&self) -> bool {
+        self.status == crate::constants::constants::STATUS_COMPLETED
+    }
+    
+    /// Mark body as completed
+    pub fn mark_completed(&mut self) {
+        self.status = crate::constants::constants::STATUS_COMPLETED.to_string();
+    }
+    
+    /// Mark body as incomplete
+    pub fn mark_incomplete(&mut self) {
+        self.status = crate::constants::constants::STATUS_INCOMPLETE.to_string();
+    }
+}
+
 /// Gruppiert alle Planeten, die sich im selben Sternensystem befinden.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SystemGroup {

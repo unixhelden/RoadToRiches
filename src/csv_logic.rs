@@ -34,7 +34,7 @@ pub fn load_and_group(path: &str) -> Result<Vec<SystemGroup>, Box<dyn Error>> {
     }
 
     // Diagnose-Check: Wie viele Systeme wurden geladen?
-    println!("Ladevorgang abgeschlossen. {} Systeme gefunden.", groups.iter().count());
+    println!("Ladevorgang abgeschlossen. {} Systeme gefunden.", groups.len());
     
     Ok(groups)
 }
