@@ -11,6 +11,8 @@ pub struct EliteApp {
     pub last_log_check: Instant,
     /// Tracks the last read byte position for each log file
     pub log_file_positions: HashMap<String, u64>,
+    // Current File
+    pub current_log_name: String,
     /// Current translations
     pub translations: crate::i18n::Translations,
 }
@@ -25,6 +27,7 @@ impl EliteApp {
             last_copy_time: None,
             last_log_check: Instant::now(),
             log_file_positions: HashMap::new(),
+            current_log_name: String::new(),
             translations,
         }
     }
@@ -73,11 +76,18 @@ impl EliteApp {
         }
         self.last_log_check = Instant::now();
 
-        let found_scans = crate::log_watcher::check_for_scans(
+        let (found_scans, current_log_name) = crate::log_watcher::check_for_scans(
             self.settings.os_mode, 
             &self.settings.log_dir,
             &mut self.log_file_positions
         );
+
+        // Jetzt wandeln wir den PathBuf in einen String für die UI um
+        if let Some(path) = current_log_name {
+            self.current_log_name = path.file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_else(|| "Unbekannt".to_string());
+        } // Speichern für die UI
 
         if !found_scans.is_empty() {
             // Create a HashSet for O(1) lookup instead of O(n) nested loops
@@ -121,6 +131,24 @@ impl eframe::App for EliteApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             crate::ui::render_menu(self, ui);
         });
+
+        // --- NEU: Die Statusleiste ---
+        egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+            // Hier nutzen wir RichText für die Größe
+            // .size(14.0) ist ein guter Mittelwert. Standard ist meist ~12.0
+            ui.label(egui::RichText::new(format!("📄 Journal: {}", self.current_log_name))
+                .size(14.0)
+                .color(ui.visuals().widgets.active.text_color())); // Optional: etwas hellere Farbe
+        
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if self.settings.sound_enabled {
+                    let vol = (self.settings.volume * 100.0) as i32;
+                    ui.label(egui::RichText::new(format!("🔊 {}%", vol)).size(14.0));
+                }
+            });
+        });
+    });
 
         ctx.request_repaint_after(std::time::Duration::from_secs(2));
     }

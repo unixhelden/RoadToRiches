@@ -11,7 +11,7 @@ pub fn check_for_scans(
     os_mode: crate::models::OsMode, 
     manual_dir: &str,
     file_positions: &mut HashMap<String, u64>
-) -> Vec<String> {
+) -> (Vec<String>, Option<PathBuf>) {
     let mut found_bodies = Vec::new();
 
     // Pfad bestimmen: Entweder manuell gesetzt oder automatisch ermittelt
@@ -21,9 +21,9 @@ pub fn check_for_scans(
         auto_find_logs(os_mode)
     };
 
-        if let Some(path) = log_path {
+        if let Some(ref path) = log_path {
             let path_str = path.to_string_lossy().to_string();
-            
+
             if let Ok(mut file) = File::open(&path) {
                 // Get the last known position for this file, or start from beginning
                 let start_pos = file_positions.get(&path_str).copied().unwrap_or(0);
@@ -82,7 +82,7 @@ pub fn check_for_scans(
                 }
             }
         }
-    found_bodies
+    (found_bodies, log_path)
 }
 
 /// Ermittelt den Standard-Log-Pfad basierend auf dem Betriebssystem.
