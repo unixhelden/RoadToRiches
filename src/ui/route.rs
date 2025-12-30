@@ -50,25 +50,6 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
     });
     ui.separator();
 
-    // --- HISTORY / COMPLETED SYSTEMS ---
-    let completed_count = group_index.unwrap_or(app.groups.len());
-    if completed_count > 0 {
-        let history_label = app.translations.get("history_label");
-        ui.collapsing(format!("{} ({})", history_label, completed_count), |ui| {
-            egui::ScrollArea::vertical().id_source("history_scroll").max_height(200.0).show(ui, |ui| {
-                for i in 0..completed_count {
-                    let group = &app.groups[i];
-                    ui.horizontal(|ui| {
-                        ui.label(egui::RichText::new("✅").color(egui::Color32::GREEN));
-                        ui.label(egui::RichText::new(&group.name).strong());
-                        ui.label(egui::RichText::new(format!("({} Jumps)", group.jumps)).weak());
-                    });
-                }
-            });
-        });
-        ui.separator();
-    }
-
     let mut needs_save = false;
 
     if let Some(idx) = group_index {
