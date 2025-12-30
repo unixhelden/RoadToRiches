@@ -16,11 +16,16 @@
   "audio_settings": "Audio-Einstellungen",
   "play_sound_on_scan": "Sound bei Scan abspielen",
   "test_sound": "🔊 Test-Ton",
-  "test_sound_tooltip": "Spielt den Scan-Sound einmal ab",
+  "test_sound_tooltip": "Spielt den Sound ab, um Lautstärke und Datei zu prüfen",
   "volume_label": "Lautstärke:",
   "choose_sound_file": "🎵 Sound-Datei wählen",
   "language_label": "Sprache:",
   "language_german": "Deutsch",
-  "language_english": "English"
+  "language_english": "English",
+  "fss_label": "FSS Scan:",
+  "dss_label": "DSS Map:",
+  "custom_sounds_hint": "Eigene Sound-Dateien (WAV/MP3):",
+  "choose_file_tooltip": "Wähle eine Audio-Datei von deinem Computer",
+  "default_sound_label": "Standard aktiv",
+  "all_targets_reached": "🎉 Alle Ziele erreicht!"
 }
-

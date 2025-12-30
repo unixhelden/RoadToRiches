@@ -49,8 +49,10 @@ pub struct AppSettings {
     pub log_dir: String,
     /// Schalter für die akustische Benachrichtigung bei Scans.
     pub sound_enabled: bool,
-    /// Pfad zur Audio-Datei (.wav oder .mp3).
-    pub sound_file: String,
+
+    pub sound_fss_path: String, // Pfad zur eigenen FSS Datei
+    pub sound_dss_path: String, // Pfad zur eigenen DSS Datei
+
     /// Volume Setting (0.0 to 1.0)
     pub volume: f32,
     /// Betriebsmodus für die Log-Suche
@@ -100,7 +102,8 @@ impl Default for AppSettings {
             csv_path: String::new(),
             log_dir: String::new(),
             sound_enabled: true,
-            sound_file: String::new(),
+            sound_fss_path: String::new(), // Pfad zur eigenen FSS Datei
+            sound_dss_path: String::new(), // Pfad zur eigenen DSS Datei
             volume: 0.5,
             os_mode: OsMode::default(),
             dark_mode: true,

@@ -140,8 +140,12 @@ impl EliteApp {
     /// Plays the embedded audio bytes (no external files needed)
     pub fn play_feedback_sound(&self, is_dss: bool) {
         if self.settings.sound_enabled {
-            let data = if is_dss { SOUND_DSS } else { SOUND_FSS };
-            crate::audio::play_sound(self.settings.volume, data);
+            let (data, custom_path) = if is_dss {
+                (SOUND_DSS, if self.settings.sound_dss_path.is_empty() { None } else { Some(self.settings.sound_dss_path.clone()) })
+            } else {
+                (SOUND_FSS, if self.settings.sound_fss_path.is_empty() { None } else { Some(self.settings.sound_fss_path.clone()) })
+            };
+            crate::audio::play_sound(self.settings.volume, custom_path, data);
         }
     }
 }

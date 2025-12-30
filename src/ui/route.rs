@@ -1,9 +1,34 @@
 use eframe::egui;
+use rfd::FileDialog;
 use crate::app::EliteApp;
 use crate::constants::constants::{SOUND_FSS, SOUND_DSS, COPY_FEEDBACK_DURATION_MS};
 
 pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
     ui.add_space(5.0);
+
+    // --- CSV LOAD BUTTON ---
+    ui.horizontal(|ui| {
+        let load_btn_text = app.translations.get("load_csv");
+        if ui.button(load_btn_text).clicked() {
+            if let Some(path) = FileDialog::new().add_filter("CSV", &["csv"]).pick_file() {
+                let path_str = path.display().to_string();
+                match crate::csv_logic::load_and_group(&path_str) {
+                    Ok(new_groups) => {
+                        app.settings.csv_path = path_str;
+                        app.groups = new_groups;
+                        app.save_settings();
+                    }
+                    Err(e) => eprintln!("Fehler beim Laden der CSV: {}", e),
+                }
+            }
+        }
+        if !app.settings.csv_path.is_empty() {
+            let file_name = std::path::Path::new(&app.settings.csv_path).file_name().unwrap_or_default().to_string_lossy();
+            ui.label(egui::RichText::new(file_name).small().weak());
+        }
+    });
+    ui.separator();
+
     let mut needs_save = false;
 
     // 1. Index suchen (wie gehabt)
@@ -67,7 +92,8 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
                                     } else { 
                                         body.mark_completed(); 
                                         // Hier nutzen wir app.settings.volume direkt über den Pfad
-                                        crate::audio::play_sound(app.settings.volume, SOUND_DSS);
+                                        let custom_path = if app.settings.sound_dss_path.is_empty() { None } else { Some(app.settings.sound_dss_path.clone()) };
+                                        crate::audio::play_sound(app.settings.volume, custom_path, SOUND_DSS);
                                     }
                                     needs_save = true;
                                 }
@@ -81,7 +107,8 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
                                     if ui.button(egui::RichText::new(dss_label).size(12.0)).clicked() {
                                         body.dss_mapped = !body.dss_mapped;
                                         if body.dss_mapped { 
-                                            crate::audio::play_sound(app.settings.volume, SOUND_DSS); 
+                                            let custom_path = if app.settings.sound_dss_path.is_empty() { None } else { Some(app.settings.sound_dss_path.clone()) };
+                                            crate::audio::play_sound(app.settings.volume, custom_path, SOUND_DSS); 
                                         }
                                         needs_save = true;
                                     }
@@ -93,7 +120,8 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
                                 if ui.button(egui::RichText::new(fss_label).size(12.0)).clicked() {
                                     body.fss_scanned = !body.fss_scanned;
                                     if body.fss_scanned { 
-                                        crate::audio::play_sound(app.settings.volume, SOUND_FSS); 
+                                        let custom_path = if app.settings.sound_fss_path.is_empty() { None } else { Some(app.settings.sound_fss_path.clone()) };
+                                        crate::audio::play_sound(app.settings.volume, custom_path, SOUND_FSS); 
                                     }
                                     needs_save = true;
                                 }
@@ -115,7 +143,13 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
         } else {
             ui.vertical_centered(|ui| {
                 ui.add_space(20.0);
-                ui.label(egui::RichText::new("🎉 Alle Ziele erreicht!").size(20.0).color(egui::Color32::GREEN));
+                if app.groups.is_empty() {
+                    let msg = app.translations.get("no_route_message");
+                    ui.label(msg);
+                } else {
+                    let all_done_msg = app.translations.get("all_targets_reached");
+                    ui.label(egui::RichText::new(all_done_msg).size(20.0).color(egui::Color32::GREEN));
+                }
             });
         }
     });

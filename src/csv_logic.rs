@@ -12,8 +12,11 @@ struct CsvRow {
     pub body_name: String,
     pub body_subtype: String,
     pub distance: f32,
+    #[serde(default)]
     pub fss_scanned: bool,
+    #[serde(default)]
     pub dss_mapped: bool,
+    #[serde(default)]
     pub status: String,
 }
 
@@ -35,14 +38,23 @@ pub fn load_and_group(path: &str) -> Result<Vec<SystemGroup>, Box<dyn Error>> {
             }
         };
 
+        // --- KOMPATIBILITÄTS-CHECK ---
+        // Die erste Version nutzte "erledigt" im Status-Feld.
+        // Wenn das gefunden wird, setzen wir beide Scans auf true.
+        let (fss, dss, status_val) = if row.status.trim() == "erledigt" {
+            (true, true, "1,1".to_string())
+        } else {
+            (row.fss_scanned, row.dss_mapped, row.status)
+        };
+
         // Create a Body object from the CSV row data
         let body = Body {
             body_name: row.body_name,
             body_subtype: row.body_subtype,
             distance: row.distance,
-            fss_scanned: row.fss_scanned,
-            dss_mapped: row.dss_mapped,
-            status: row.status,
+            fss_scanned: fss,
+            dss_mapped: dss,
+            status: status_val,
         };
         
         // Grouping Logic: Check if system group already exists
