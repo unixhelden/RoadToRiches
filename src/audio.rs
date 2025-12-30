@@ -1,49 +1,28 @@
 use rodio::{Decoder, OutputStream, Sink};
-use std::io::{Cursor, Read};
-use std::fs::File;
+use std::io::Cursor;
 use std::thread;
 
-/// Plays a scan sound with the specified volume.
-/// If sound_file is provided and exists, uses that file; otherwise uses the embedded default.
-pub fn play_scan_sound(volume: f32, sound_file: Option<&str>) {
-    // Convert to owned String before moving into thread
-    let sound_file = sound_file.map(|s| s.to_string());
-    
+/// Plays audio from embedded byte data.
+/// - `volume`: Range from 0.0 to 1.0.
+/// - `audio_data`: The static byte array (e.g., from constants.rs).
+pub fn play_sound(volume: f32, audio_data: &'static [u8]) {
+    // We spawn a new thread so the audio playback doesn't block the UI thread.
     thread::spawn(move || {
-        // 'move' ist wichtig, um 'volume' und 'sound_file' in den Thread zu übertragen
-        
+        // Initialize the default audio output device.
         if let Ok((_stream, handle)) = OutputStream::try_default() {
+            // Create a Sink which manages playback on the output device.
             if let Ok(sink) = Sink::try_new(&handle) {
                 sink.set_volume(volume);
                 
-                // Try to use custom sound file if provided and exists
-                let source_result = if let Some(ref path) = sound_file {
-                    if std::path::Path::new(path).exists() {
-                        File::open(path)
-                            .and_then(|mut file| {
-                                let mut buffer = Vec::new();
-                                file.read_to_end(&mut buffer)?;
-                                Ok(buffer)
-                            })
-                            .ok()
-                            .and_then(|data| {
-                                Decoder::new(Cursor::new(data)).ok()
-                            })
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                };
+                // Wrap the bytes in a Cursor so rodio can read it like a file stream.
+                let cursor = Cursor::new(audio_data);
                 
-                // Fallback to embedded sound if custom file not available
-                let source = source_result.unwrap_or_else(|| {
-                    let audio_data = include_bytes!("../assets/scan_success.mp3");
-                    Decoder::new(Cursor::new(audio_data.to_vec())).expect("Embedded sound file should be valid")
-                });
-                
-                sink.append(source);
-                sink.sleep_until_end();
+                // Decode the audio format (MP3).
+                if let Ok(source) = Decoder::new(cursor) {
+                    sink.append(source);
+                    // Keep this background thread alive until the sound has finished playing.
+                    sink.sleep_until_end();
+                }
             }
         }
     });

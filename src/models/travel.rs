@@ -1,60 +1,45 @@
 use serde::{Deserialize, Serialize};
 
-/// Repräsentiert einen einzelnen Himmelskörper (Planeten/Mond).
-/// Die Aliase helfen dabei, verschiedene CSV-Formate von Spansh zu unterstützen.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)] // Added this line to fix CSV errors
 pub struct Body {
-    /// Name des Sternensystems (wird für die Gruppierung benötigt)
-    #[serde(alias = "system_name", alias = "System Name", alias = "SystemName")]
-    pub system_name: String,
-    
-    /// Name des Planeten/Mondes
-    #[serde(alias = "body_name", alias = "Body Name", alias = "BodyName")]
     pub body_name: String,
-    
-    /// Typ des Körpers (z.B. "High metal content world")
-    #[serde(alias = "body_subtype", alias = "Body Subtype", alias = "BodySubtype")]
     pub body_subtype: String,
-    
-    /// Entfernung zum Ankunftspunkt im System in Lichtsekunden
-    #[serde(alias = "distance", alias = "Distance", default)]
-    pub distance: f64,
-    
-    /// Anzahl der Sprünge, die noch bis zu diesem Ziel nötig sind
-    #[serde(alias = "jumps", alias = "Jumps", default)]
-    pub jumps: i32,
-    
-    /// Gibt an, ob der Planet terraformierbar ist ("Yes" oder "No")
-    #[serde(alias = "terraformable", alias = "Terraformable", default)]
-    pub terraformable: String,
-    
-    /// Interner Status: "erledigt" oder leer. Wird nicht von Spansh geliefert, 
-    /// sondern von unserer App verwaltet.
-    #[serde(default)] 
+    pub distance: f32,
+    pub fss_scanned: bool,
+    pub dss_mapped: bool,
     pub status: String,
 }
 
-impl Body {
-    /// Check if body is completed
-    pub fn is_completed(&self) -> bool {
-        self.status == crate::constants::constants::STATUS_COMPLETED
-    }
-    
-    /// Mark body as completed
-    pub fn mark_completed(&mut self) {
-        self.status = crate::constants::constants::STATUS_COMPLETED.to_string();
-    }
-    
-    /// Mark body as incomplete
-    pub fn mark_incomplete(&mut self) {
-        self.status = crate::constants::constants::STATUS_INCOMPLETE.to_string();
-    }
-}
-
-/// Gruppiert alle Planeten, die sich im selben Sternensystem befinden.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SystemGroup {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SystemGroup { // Added this back so models/mod.rs finds it
     pub name: String,
     pub jumps: i32,
     pub bodies: Vec<Body>,
+}
+
+impl Body {
+    pub fn is_star(&self) -> bool {
+        let s = self.body_subtype.to_lowercase();
+        s.contains("star") || s.contains("zwerg") || s.contains("sun")
+    }
+
+    pub fn is_completed(&self) -> bool {
+        if self.is_star() { self.fss_scanned } 
+        else { self.fss_scanned && self.dss_mapped }
+    }
+
+    pub fn mark_fss_done(&mut self) { self.fss_scanned = true; }
+    pub fn mark_dss_done(&mut self) { self.dss_mapped = true; }
+
+    pub fn mark_completed(&mut self) {
+        self.fss_scanned = true;
+        self.dss_mapped = true;
+        self.status = "erledigt".to_string();
+    }
+
+    pub fn mark_incomplete(&mut self) {
+        self.fss_scanned = false;
+        self.dss_mapped = false;
+        self.status = crate::constants::constants::STATUS_INCOMPLETE.to_string();
+    }
 }

@@ -60,11 +60,13 @@ jobs:
           cp target/release/roadtoriches package/
           tar -czvf roadtoriches-v${VERSION}-linux.tar.gz -C package .
 
-      - name: Upload Release Asset
+     # 4. Release Hochladen mit dynamischen Dateinamen
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
           files: |
-            roadtoriches-windows.zip
-            roadtoriches-linux.tar.gz
+            roadtoriches-v*-windows.zip
+            roadtoriches-v*-linux.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

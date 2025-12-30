@@ -1,21 +1,24 @@
 /// Application-wide constants
 pub mod constants {
-    /// Status string for completed bodies
-    pub const STATUS_COMPLETED: &str = "erledigt";
-    
-    /// Status string for incomplete bodies
+    /// String used in CSV for unfinished bodies
     pub const STATUS_INCOMPLETE: &str = "";
     
-    /// Interval for checking log files (seconds)
+    /// How often to poll the Elite Journal files (in seconds)
     pub const LOG_CHECK_INTERVAL_SECS: u64 = 2;
     
-    /// Duration for copy feedback (milliseconds)
+    /// How long the "Copied!" message stays visible (in milliseconds)
     pub const COPY_FEEDBACK_DURATION_MS: u64 = 800;
     
-    /// Default content width for route view (pixels)
-    pub const ROUTE_CONTENT_WIDTH: f32 = 500.0;
-    
-    /// Default settings filename
+    /// Filename for the app configuration
     pub const SETTINGS_FILENAME: &str = "settings.json";
-}
 
+    // --- AUDIO ASSETS ---
+    // include_bytes! embeds the files into your .exe during compilation.
+    // The path is relative to this file's location.
+    
+    /// Sound data for FSS (System-wide Discovery Scan)
+    pub const SOUND_FSS: &[u8] = include_bytes!("../assets/fss_scanned.mp3");
+
+    /// Sound data for DSS (Planetary Surface Mapping)
+    pub const SOUND_DSS: &[u8] = include_bytes!("../assets/dss_mapped.mp3");
+}

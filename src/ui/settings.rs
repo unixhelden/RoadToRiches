@@ -1,6 +1,7 @@
 use eframe::egui;
 use rfd::FileDialog;
 use crate::app::EliteApp;
+use crate::constants::constants::SOUND_FSS;
 
 /// Rendert die Konfigurationsseite der Anwendung.
 pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
@@ -99,7 +100,7 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
                 } else {
                     Some(app.settings.sound_file.as_str())
                 };
-                crate::audio::play_scan_sound(app.settings.volume, sound_file);
+                crate::audio::play_sound(app.settings.volume, SOUND_FSS);
             }
         });
     });
