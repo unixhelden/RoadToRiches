@@ -29,29 +29,45 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
         }
         
         // FIX 3: Zielsystem anzeigen statt Dateiname
-        if let Some(idx) = group_index {
-            let target_name = &app.groups[idx].name;
-            
+        if !app.groups.is_empty() {
+            let final_name = &app.groups.last().unwrap().name;
             let total = app.groups.len();
-            let percent = if total > 0 { (idx as f32 / total as f32) * 100.0 } else { 0.0 };
+            let current_idx = group_index.unwrap_or(total);
+            let percent = if total > 0 { (current_idx as f32 / total as f32) * 100.0 } else { 0.0 };
             
             // Destination Name: Größer (24.0) und in Elite-Orange
-            ui.label(egui::RichText::new(format!("🎯 {}", target_name))
+            ui.label(egui::RichText::new(format!("🏁 {}", final_name))
                 .size(24.0).strong().color(egui::Color32::from_rgb(255, 125, 0)));
             
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let route_label = app.translations.get("route_progress_label");
                 ui.label(egui::RichText::new(format!("{} {:.2}%", route_label, percent).replace('.', ",")).size(14.0).weak());
             });
-        } else if !app.groups.is_empty() {
-            let all_done = app.translations.get("all_targets_reached");
-            ui.label(egui::RichText::new(all_done).color(egui::Color32::GREEN));
         } else if !app.settings.csv_path.is_empty() {
             let file_name = std::path::Path::new(&app.settings.csv_path).file_name().unwrap_or_default().to_string_lossy();
             ui.label(egui::RichText::new(file_name).small().weak());
         }
     });
     ui.separator();
+
+    // --- HISTORY / COMPLETED SYSTEMS ---
+    let completed_count = group_index.unwrap_or(app.groups.len());
+    if completed_count > 0 {
+        let history_label = app.translations.get("history_label");
+        ui.collapsing(format!("{} ({})", history_label, completed_count), |ui| {
+            egui::ScrollArea::vertical().id_source("history_scroll").max_height(200.0).show(ui, |ui| {
+                for i in 0..completed_count {
+                    let group = &app.groups[i];
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("✅").color(egui::Color32::GREEN));
+                        ui.label(egui::RichText::new(&group.name).strong());
+                        ui.label(egui::RichText::new(format!("({} Jumps)", group.jumps)).weak());
+                    });
+                }
+            });
+        });
+        ui.separator();
+    }
 
     let mut needs_save = false;
 

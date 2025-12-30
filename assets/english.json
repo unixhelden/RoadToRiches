@@ -28,5 +28,9 @@
   "choose_file_tooltip": "Select an audio file from your computer",
   "default_sound_label": "Standard active",
   "all_targets_reached": "🎉 All targets reached!",
-  "route_progress_label": "Route:"
+  "route_progress_label": "Route:",
+  "history_label": "📜 History",
+  "history_tab": "📜 History",
+  "no_history_yet": "No systems completed yet.",
+  "jumps_label": "Jumps"
 }

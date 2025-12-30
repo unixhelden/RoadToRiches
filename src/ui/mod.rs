@@ -4,6 +4,7 @@ use crate::app::EliteApp;
 pub mod route;
 pub mod settings;
 pub mod modals;
+pub mod history;
 
 /// Wendet das Elite-typische Orange-Schwarze Design global auf die App an.
 pub fn apply_elite_theme(ctx: &egui::Context, dark_mode: bool) {
@@ -49,6 +50,12 @@ pub fn render_menu(app: &mut EliteApp, ui: &mut egui::Ui) {
         if ui.selectable_label(app.current_tab == "settings", settings_label).clicked() {
             app.current_tab = "settings".to_string();
         }
+
+        // Tab: Verlauf
+        let history_label = app.translations.get("history_tab");
+        if ui.selectable_label(app.current_tab == "history", history_label).clicked() {
+            app.current_tab = "history".to_string();
+        }
     });
     
     ui.add_space(5.0);
@@ -59,6 +66,7 @@ pub fn render_menu(app: &mut EliteApp, ui: &mut egui::Ui) {
     match app.current_tab.as_str() {
         "route" => route::render(app, ui),
         "settings" => settings::render(app, ui),
+        "history" => history::render(app, ui),
         _ => { 
             let not_found = app.translations.get("tab_not_found");
             ui.label(not_found);
