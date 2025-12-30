@@ -112,13 +112,13 @@ impl EliteApp {
                                 if !body.dss_mapped {
                                     body.mark_dss_done();
                                     changed = true;
-                                    sounds_to_play.push(true); // Queue DSS sound
+                                    sounds_to_play.push(true);
                                 }
                             } else {
                                 if !body.fss_scanned {
                                     body.mark_fss_done();
                                     changed = true;
-                                    sounds_to_play.push(false); // Queue FSS sound
+                                    sounds_to_play.push(false);
                                 }
                             }
                         }

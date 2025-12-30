@@ -27,5 +27,6 @@
   "custom_sounds_hint": "Custom Sound Files (WAV/MP3):",
   "choose_file_tooltip": "Select an audio file from your computer",
   "default_sound_label": "Standard active",
-  "all_targets_reached": "🎉 All targets reached!"
+  "all_targets_reached": "🎉 All targets reached!",
+  "route_progress_label": "Route:"
 }

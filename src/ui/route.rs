@@ -6,6 +6,11 @@ use crate::constants::constants::{SOUND_FSS, SOUND_DSS, COPY_FEEDBACK_DURATION_M
 pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
     ui.add_space(5.0);
 
+    // 1. Index suchen (nach oben verschoben für Label-Anzeige)
+    let group_index = app.groups.iter().position(|g| {
+        g.bodies.iter().any(|b| !b.is_completed())
+    });
+
     // --- CSV LOAD BUTTON ---
     ui.horizontal(|ui| {
         let load_btn_text = app.translations.get("load_csv");
@@ -22,7 +27,26 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
                 }
             }
         }
-        if !app.settings.csv_path.is_empty() {
+        
+        // FIX 3: Zielsystem anzeigen statt Dateiname
+        if let Some(idx) = group_index {
+            let target_name = &app.groups[idx].name;
+            
+            let total = app.groups.len();
+            let percent = if total > 0 { (idx as f32 / total as f32) * 100.0 } else { 0.0 };
+            
+            // Destination Name: Größer (24.0) und in Elite-Orange
+            ui.label(egui::RichText::new(format!("🎯 {}", target_name))
+                .size(24.0).strong().color(egui::Color32::from_rgb(255, 125, 0)));
+            
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let route_label = app.translations.get("route_progress_label");
+                ui.label(egui::RichText::new(format!("{} {:.2}%", route_label, percent).replace('.', ",")).size(14.0).weak());
+            });
+        } else if !app.groups.is_empty() {
+            let all_done = app.translations.get("all_targets_reached");
+            ui.label(egui::RichText::new(all_done).color(egui::Color32::GREEN));
+        } else if !app.settings.csv_path.is_empty() {
             let file_name = std::path::Path::new(&app.settings.csv_path).file_name().unwrap_or_default().to_string_lossy();
             ui.label(egui::RichText::new(file_name).small().weak());
         }
@@ -31,59 +55,76 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
 
     let mut needs_save = false;
 
-    // 1. Index suchen (wie gehabt)
-    let group_index = app.groups.iter().position(|g| {
-        g.bodies.iter().any(|b| !b.is_completed())
-    });
+    if let Some(idx) = group_index {
+        
+        // 2. WICHTIG: Daten KOPIEREN
+        let (system_name, system_jumps) = {
+            let g = &app.groups[idx];
+            (g.name.clone(), g.jumps)
+        };
 
-    egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
-        if let Some(idx) = group_index {
+        // FIX 2: Header fixiert oben (außerhalb der ScrollArea)
+        ui.group(|ui| {
+            ui.set_min_width(ui.available_width());
             
-            // 2. WICHTIG: Daten KOPIEREN, bevor wir in die UI-Closures gehen
-            // So blockiert 'group' nicht das 'app' Objekt.
-            let (system_name, system_jumps) = {
-                let g = &app.groups[idx];
-                (g.name.clone(), g.jumps)
-            };
+            ui.horizontal(|ui| {
+                let header_text = format!("SYSTEM: {} ({} JUMPS)", system_name.to_uppercase(), system_jumps);
+                
+                let header_btn = ui.selectable_label(false, egui::RichText::new(header_text)
+                    .size(16.0).strong().color(egui::Color32::from_rgb(255, 125, 0)));
+                
+                if header_btn.clicked() {
+                    app.copy_to_clipboard(&system_name, ui.ctx());
+                }
 
+                if let Some(last_copy) = app.last_copy_time {
+                    if last_copy.elapsed().as_millis() < COPY_FEEDBACK_DURATION_MS as u128 {
+                        ui.label(egui::RichText::new(" 📋 Copied!").color(egui::Color32::GREEN).italics());
+                        ui.ctx().request_repaint();
+                    }
+                }
+            });
+        });
+
+        ui.add_space(5.0);
+
+        // FIX 2: Scrollbare Liste der Planeten
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            // 3. Jetzt holen wir uns die Bodies. 
+            let bodies = &mut app.groups[idx].bodies;
+            
+            // Wir packen die Liste in eine Group für den visuellen Rahmen
             ui.group(|ui| {
                 ui.set_min_width(ui.available_width());
-                
-                ui.horizontal(|ui| {
-                    // Wir nutzen hier nur die kopierten Variablen: system_name, system_jumps
-                    let header_text = format!("SYSTEM: {} ({} JUMPS)", system_name.to_uppercase(), system_jumps);
-                    
-                    let header_btn = ui.selectable_label(false, egui::RichText::new(header_text)
-                        .size(16.0).strong().color(egui::Color32::from_rgb(255, 125, 0)));
-                    
-                    if header_btn.clicked() {
-                        // app ist hier jetzt frei verfügbar!
-                        app.copy_to_clipboard(&system_name, ui.ctx());
-                    }
 
-                    if let Some(last_copy) = app.last_copy_time {
-                        if last_copy.elapsed().as_millis() < COPY_FEEDBACK_DURATION_MS as u128 {
-                            ui.label(egui::RichText::new(" 📋 Copied!").color(egui::Color32::GREEN).italics());
-                            ui.ctx().request_repaint();
-                        }
-                    }
-                });
-                ui.separator();
-
-                // 3. Jetzt holen wir uns die Bodies. 
-                // Da wir 'system_name' oben schon fertig benutzt haben, 
-                // können wir jetzt 'app.groups' wieder mutable ausleihen.
-                let bodies = &mut app.groups[idx].bodies;
-                
                 for body in bodies {
                     let is_done = body.is_completed();
                     
                     ui.vertical(|ui| {
                         ui.horizontal(|ui| {
-                            let (p, c) = if is_done { (1.0, egui::Color32::GREEN) } else { (0.1, egui::Color32::GRAY) };
+                            let elite_orange = egui::Color32::from_rgb(255, 125, 0);
+
+                            // FIX 1: Fortschrittsanzeige (Orange für FSS, Grün für DSS)
+                            let (p, c) = if body.dss_mapped { 
+                                (1.0, egui::Color32::GREEN) 
+                            } else if body.fss_scanned { 
+                                (0.5, elite_orange) // Einheitliches Elite-Orange
+                            } else { 
+                                (0.0, egui::Color32::GRAY) 
+                            };
+
                             ui.add(egui::ProgressBar::new(p).fill(c).desired_width(40.0));
 
-                            ui.add_sized([160.0, 20.0], egui::Label::new(egui::RichText::new(&body.body_name).size(14.0).strong()));
+                            // Name einfärben je nach Status
+                            let name_color = if body.dss_mapped {
+                                egui::Color32::GREEN
+                            } else if body.fss_scanned {
+                                elite_orange
+                            } else {
+                                ui.visuals().text_color()
+                            };
+
+                            ui.add_sized([160.0, 20.0], egui::Label::new(egui::RichText::new(&body.body_name).size(14.0).strong().color(name_color)));
 
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                 if ui.add_sized([85.0, 28.0], egui::Button::new("DONE")).clicked() {
@@ -140,19 +181,19 @@ pub fn render(app: &mut EliteApp, ui: &mut egui::Ui) {
                     });
                 }
             });
-        } else {
-            ui.vertical_centered(|ui| {
-                ui.add_space(20.0);
-                if app.groups.is_empty() {
-                    let msg = app.translations.get("no_route_message");
-                    ui.label(msg);
-                } else {
-                    let all_done_msg = app.translations.get("all_targets_reached");
-                    ui.label(egui::RichText::new(all_done_msg).size(20.0).color(egui::Color32::GREEN));
-                }
-            });
-        }
-    });
+        });
+    } else {
+        ui.vertical_centered(|ui| {
+            ui.add_space(20.0);
+            if app.groups.is_empty() {
+                let msg = app.translations.get("no_route_message");
+                ui.label(msg);
+            } else {
+                let all_done_msg = app.translations.get("all_targets_reached");
+                ui.label(egui::RichText::new(all_done_msg).size(20.0).color(egui::Color32::GREEN));
+            }
+        });
+    }
 
     if needs_save {
         let _ = crate::csv_logic::save_all(&app.settings.csv_path, &app.groups);
